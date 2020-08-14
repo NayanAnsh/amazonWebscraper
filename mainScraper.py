@@ -25,10 +25,16 @@ def getPrice(bs4soup):
     price =  int(PRICE_RAW.replace("₹","").replace(",","").replace(".00","").strip())
     return price
 
-
+def getProductName(bs4soup):
+    PRODUCTNAME_RAW =  bs4soup.find(id = "productTitle").get_text()
+    productName = PRODUCTNAME_RAW.strip()
+    return productName
 req = makeConnection()
 soup =  BeautifulSoup(req.content,"html.parser")
 price = getPrice(soup)
-print(price)  
+
+productName =getProductName(soup)
+print(productName)
+  
 
 
