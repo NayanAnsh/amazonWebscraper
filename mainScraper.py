@@ -5,16 +5,19 @@ from datetime import date
 from bs4 import BeautifulSoup
 import matplotlib.pyplot as pyplot
 import sys
-RAW_URL = "https://www.amazon.in/AMD-Ryzen-3600-Processor-100000031BOX/dp/B07STGGQ18/ref=sr_1_4?dchild=1&keywords=3600&qid=1596975477&sr=8-4"
+RAW_URL = ["https://www.amazon.in/AMD-Ryzen-3600-Processor-100000031BOX/dp/B07STGGQ18/ref=sr_1_4?dchild=1&keywords=3600&qid=1596975477&sr=8-4"
+           ,"https://www.amazon.in/LG-inch-60-96-Gaming-Monitor/dp/B06XDY3SJF/ref=sr_1_5?crid=2O80YIB7ESTM9&dchild=1&keywords=monitor+ips+1ms&qid=1597508358&s=computers&sprefix=monitor+ips+1ms%2Ccomputers%2C436&sr=1-5"
+           ,"https://www.amazon.in/ASUS-Prime-B450M-A-Motherboard-DDR4/dp/B07F6YQV4J/ref=sr_1_8?crid=KP16TPABINFP&dchild=1&keywords=motherboard+for+3rd+gen+ryzen&qid=1597508585&s=computers&sprefix=motherboard+for+3rd%2Ccomputers%2C309&sr=1-8"
+           ,"https://www.amazon.in/HyperX-3200MHz-Desktop-Memory-HX432C16FB3/dp/B07WJJ9CNG/ref=sr_1_1?crid=2AFMX0JY5BNH5&dchild=1&keywords=ram+3200mhz&qid=1597508860&s=computers&sprefix=ram+3200%2Ccomputers%2C305&sr=1-1"]
 FILEPATH =  os.getcwd()
 today = str(date.today())
 
 
 
 
-def makeConnection():
+def makeConnection(index):
         #Amazon is denying service(error code 503) without user agent Header
-    req =  requests.get(RAW_URL,headers={"User-Agent":"Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"})
+    req =  requests.get(RAW_URL[index],headers={"User-Agent":"Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"})
 
     if not(req.status_code == 200):
         print("Something is wrong - \n error code - \n ",req.status_code)
@@ -37,18 +40,7 @@ def getProductName(bs4soup):
 
 
 
-req = makeConnection()
-soup =  BeautifulSoup(req.content,"html.parser")
-productPrice = getPrice(soup)
 
-productName =getProductName(soup)
-productNameShort =  productName[0:45]
-productNameShort =  productNameShort[0:productNameShort.rindex(" ")] #removes incomplete words
-
-
-tableName = productNameShort.replace(" ","_")
-table = tableName+"(date,price)"
-values = '("'+ today +'" , "'+str(productPrice)+'")'
 
 #################### DATABASE #####################
 def executeSql(query):
@@ -88,8 +80,6 @@ def deleteDB(condition):
 
 
 
-createDB()
-insertDB(values)
 ########################### GRAPH ###################
 def getDateList():
     dateListRaw =  searchDB(columnName = "date")
@@ -105,6 +95,19 @@ def getPriceList():
         priceList.append(int(p[0]))
     return priceList
 
+
+req = makeConnection(0)
+soup =  BeautifulSoup(req.content,"html.parser")
+productPrice = getPrice(soup)
+
+productName =getProductName(soup)
+productNameShort =  productName[0:45]
+productNameShort =  productNameShort[0:productNameShort.rindex(" ")] #removes incomplete words
+tableName = productNameShort.replace(" ","_")
+table = tableName+"(date,price)"
+values = '("'+ today +'" , "'+str(productPrice)+'")'
+createDB()
+insertDB(values)
 dateList = getDateList()
 priceList = getPriceList()
 pyplot.plot(dateList,priceList)
