@@ -127,7 +127,14 @@ for i in range(0,len(RAW_URL)):
     pyplot.suptitle(productNameShort)
     pyplot.xlabel("Date")
     pyplot.ylabel("price")
+    i = 0
+    for j in priceList:
+        
+        print(i,j)
+        pyplot.annotate(j, (i,j))
+        i = i+1
     pyplot.show()
+    
     
     #show database
     print("All commands executed showing database table")
