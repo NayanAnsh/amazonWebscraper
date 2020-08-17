@@ -3,6 +3,7 @@ import os
 from datetime import date
 import random
 import matplotlib.pyplot as pyplot
+from adjustText import adjust_text
 path = os.getcwd()
 databaseName =  "testDataBase.db"
 conn = sqlite3.connect(path+"/"+databaseName)
@@ -40,6 +41,6 @@ for d in dateList:
 prices = []
 for p in priceList:
     prices.append(int(str(p[0])))
-
 pyplot.plot(dates,prices)
+adjust_text([pyplot.text(i, prices[i], str(prices[i])) for i in range(0,len(prices))])
 pyplot.show()

@@ -6,6 +6,17 @@ from bs4 import BeautifulSoup
 import matplotlib.pyplot as pyplot
 import sys
 import re
+from adjustText import adjust_text
+#TODO: (Critical BUG)program is not storing data in databse when run by task scheduler(Need testing)
+# Todone : (BUG)(FIXED)beautify the pyplot.annotion implement this library for better results
+#        https://github.com/Phlya/adjustText
+# Todo : add program to notify for specific price drop from previous day 
+# Todo:  add mailing system to mail the price drop
+# Todo: enable program to automatically write itself in task scheduler 
+#       with users permition:
+
+
+
 RAW_URL = ["https://www.amazon.in/AMD-Ryzen-3600-Processor-100000031BOX/dp/B07STGGQ18/ref=sr_1_4?dchild=1&keywords=3600&qid=1596975477&sr=8-4"
            ,"https://www.amazon.in/LG-inch-60-96-Gaming-Monitor/dp/B06XDY3SJF/ref=sr_1_5?crid=2O80YIB7ESTM9&dchild=1&keywords=monitor+ips+1ms&qid=1597508358&s=computers&sprefix=monitor+ips+1ms%2Ccomputers%2C436&sr=1-5"
            ,"https://www.amazon.in/ASUS-Prime-B450M-A-Motherboard-DDR4/dp/B07F6YQV4J/ref=sr_1_8?crid=KP16TPABINFP&dchild=1&keywords=motherboard+for+3rd+gen+ryzen&qid=1597508585&s=computers&sprefix=motherboard+for+3rd%2Ccomputers%2C309&sr=1-8"
@@ -43,7 +54,7 @@ def getProductName(bs4soup):
 
 
 
-#################### DATABASE #####################
+#################### DATABASE(AmazonDatabase.db) #####################
 def executeSql(query):
     output = ""
     conn =  sql.connect(FILEPATH +"\database\\"+"AmazonDatabase"+".db")
@@ -102,7 +113,27 @@ def getPriceList():
     for p  in priceListRaw:
         priceList.append(int(p[0]))
     return priceList
-
+def labelDataPoints(priceList):
+    
+    text = []
+    for i in range(0,len(priceList)):
+       text.append(pyplot.text(i, priceList[i], str(priceList[i])))
+    adjust_text(text,arrowprops=dict(arrowstyle='->', color='red')) 
+    
+def showGraph():
+    
+    dateList = getDateList()
+    priceList = getPriceList()
+    pyplot.plot(dateList,priceList)
+    pyplot.suptitle(productNameShort)
+    pyplot.xlabel("Date")
+    pyplot.ylabel("price")
+    pyplot.yticks(range(round(int(min(priceList)/1.1),-3),int(max(priceList)*1.1),500))
+    labelDataPoints(priceList) # must call this  method at last or just berfore pyplot.show() function
+       
+    
+    pyplot.show()
+    
 ################# MAIN #############
 for i in range(0,len(RAW_URL)):
     #make connection and extract data
@@ -121,19 +152,7 @@ for i in range(0,len(RAW_URL)):
     insertDB(values)
 
     #graph work
-    dateList = getDateList()
-    priceList = getPriceList()
-    pyplot.plot(dateList,priceList)
-    pyplot.suptitle(productNameShort)
-    pyplot.xlabel("Date")
-    pyplot.ylabel("price")
-    i = 0
-    for j in priceList:
-        
-        print(i,j)
-        pyplot.annotate(j, (i,j))
-        i = i+1
-    pyplot.show()
+    showGraph() #Disabled This method prevent fuction of task schedulaer decomment it if want to see graph
     
     
     #show database
