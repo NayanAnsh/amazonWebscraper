@@ -7,6 +7,18 @@ Created on Sat Sep 12 20:41:12 2020
 
 import smtplib as smt
 from email.message import EmailMessage
+
+HTML = '''\
+    <!DOCTYPE html>
+<html>
+<body>
+
+<h1>My First Heading</h1>
+<p>My first paragraph.</p>
+
+</body>
+</html>
+    '''
 def sendMails(Subject,body):
     
     
@@ -21,6 +33,7 @@ def sendMails(Subject,body):
     msg['from'] =  fromMsg
     msg['To'] = ",".join(toMsg)
     msg.set_content(body)
+    msg.add_alternative(HTML , subtype = 'html')
     message = Subject+"\n"+body+"\n"
     print(message)
     

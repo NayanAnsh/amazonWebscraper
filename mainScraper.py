@@ -9,6 +9,7 @@ import sys
 import re
 from adjustText import adjust_text
 import smtplib as smt
+from email.message import EmailMessage
 # TODOne : (CRITICAL BUG)(FIXED) Sometimes program extract wrong price
 #TODO: (Critical BUG) As amazon changes its product name,the databse treat it like new product and makes a new table
 #       for it and hence 2 or more tables form of same product e.g:- LG 22 inch ...(monitor)
@@ -31,9 +32,9 @@ RAW_URL = ["https://www.amazon.in/AMD-Ryzen-3600-Processor-100000031BOX/dp/B07ST
 FILEPATH = os.getcwd()
 today = str(date.today())
 
-DISCOUNTAlERT =   0 # n%
+DISCOUNTAlERT =   20 # n%
 DISCOUNTAlERTFROMLAST = 30 # days
-dataToBeDrawn = 10 # Draw graph of n number of days
+dataToBeDrawn = 12 # Draw graph of n number of days
 
 
 def makeConnection(URL):
@@ -221,14 +222,15 @@ def getAveragePrice(days):
     avgPrice =  round(sumPrice/len(priceList))
     return avgPrice
 
-def CheckpriceDrop(currentproductPrice,currentProductName):
+def CheckpriceDrop(currentproductPrice,currentProductName,URL):
     avgPrice = getAveragePrice(DISCOUNTAlERTFROMLAST)
     discountPrice = avgPrice - ((avgPrice*DISCOUNTAlERT)/100)
     # print(discountPrice)
     # print(avgPrice)
     if  discountPrice >= currentproductPrice :
         #Do Something on Price Drop
-        sendMails(currentProductName+" Price Drop", "This is working avg price  <br> -" +str(avgPrice)+" current price \n -"+str(productPrice))
+        currentProductName = str(currentProductName.encode('utf8'))
+        sendMails("PRICEDROP: "+currentProductName,"The price of "+currentProductName+" Has been dropped by "+ str( avgPrice - currentproductPrice) + " which is drop of "+ str(round(((avgPrice - currentproductPrice)/avgPrice)*100  ))  +"% from average price of  Rs."+str(avgPrice)+" \n Current price = "+str(currentproductPrice) +"\n Link - "+str(URL))
         print("PRICE DROPPPPPPPPP!!!!!!!!")
         print("avg",avgPrice ," current ",productPrice )
 ###################### MAIL SYSTEM ###############
@@ -239,7 +241,8 @@ def sendMails(subject,body):
     fromMsg = "nezukodemon89@gmail.com"
     toMsg = ["nayanansh@gmail.com"
              ,"nayanansh69@gmail.com"
-             ]
+             ,"korrawaterbender1@gmail.com"
+             ,"kanikeghoul59@gmail.com"]
           
     
     subject =  "Subject: "+subject
@@ -248,9 +251,9 @@ def sendMails(subject,body):
     
     server = smt.SMTP("smtp.gmail.com",587)
     server.starttls() # Enable TLS
-    server.login("nezukodemon89@gmail.com","AsamplePass@12345")
+    server.login("nezukodemon89@gmail.com",                                                           "AsamplePass@12345")
     server.set_debuglevel(0) #Print Data level 1 at lvl2 print data with time stamp at lvl 0 nothing will be printed
-    server.sendmail(fromMsg, toMsg, message.encode('utf8'))
+    server.sendmail(fromMsg, toMsg, message)
     server.quit()
 ######################### MAIN  ##################
 for i in range(0,len(RAW_URL)):
@@ -279,7 +282,7 @@ for i in range(0,len(RAW_URL)):
 
 
     #Price Drop
-    CheckpriceDrop(productPrice,tableName)
+    CheckpriceDrop(productPrice,tableName,CurrentUrl)
 
     #show database
     # print("All commands executed showing database table")
