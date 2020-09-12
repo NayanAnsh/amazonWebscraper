@@ -14,7 +14,7 @@ from adjustText import adjust_text
 #TODOone: (FIXED)(Critical BUG)program is not storing data in databse when run by task scheduler(Need testing)
 # Todone : (BUG)(FIXED)beautify the pyplot.annotion implement this library for better results
 #        https://github.com/Phlya/adjustText
-# Todo : add program to notify for specific price drop from previous day
+# Todone : add program to notify for specific price drop from previous n number of day
 # Todo:  add mailing system to mail the price drop
 # Todo: enable program to automatically write itself in task scheduler
 #       with users permition:
@@ -30,8 +30,10 @@ RAW_URL = ["https://www.amazon.in/AMD-Ryzen-3600-Processor-100000031BOX/dp/B07ST
 FILEPATH = os.getcwd()
 today = str(date.today())
 
-DISCOUNTAlERT =   20 # n%
+DISCOUNTAlERT =   0 # n%
 DISCOUNTAlERTFROMLAST = 30 # days
+dataToBeDrawn = 30 # Draw graph of n number of days
+
 
 def makeConnection(URL):
         #Amazon is denying service(error code 503) without user agent Header
@@ -148,11 +150,21 @@ def getTableName(name):
     return regex.sub('', name).replace(" ","_")
 
 ########################### GRAPH ###################
-def getDateList():
+def getDateList(withYear = True,withMonth = True,withDay = True):
+
     dateListRaw =  searchDB(columnName = "date")
     dateList = []
-    for  d in dateListRaw:
-        dateList.append(str(d[0]))
+    if withYear:
+        for  d in dateListRaw:
+            dateList.append(str(d[0]))
+    else:
+        for  d in dateListRaw:
+            date =str(d[0])
+            date =  date.split("-")
+            day = date[2]
+            month = date[1]
+            dateList.append(day+"."+month)
+
     return dateList
 
 def getPriceList():
@@ -177,8 +189,8 @@ def labelDataPoints(priceList):
 
 
 def showGraph():
-    dataToBeDrawn = 6
-    dateList = getDateList()[-dataToBeDrawn:]
+
+    dateList = getDateList(withYear= False)[-dataToBeDrawn:]
     priceList = getPriceList()[-dataToBeDrawn:]
     pyplot.plot(dateList,priceList)
     pyplot.suptitle(productNameShort+"\n last " +str(dataToBeDrawn)+" days")
@@ -236,9 +248,9 @@ for i in range(0,len(RAW_URL)):
     insertDB(values)
 
     #graph work
-    #showGraph() #Disabled This method prevent fuction of task schedulaer decomment it if want to see graph
+    showGraph() #Disabled This method prevent fuction of task schedulaer decomment it if want to see graph
 
-    #updatequery = "UPDATE "+tableName +" SET SNO = AUTOINCREMENT"
+
 
     #Price Drop
     CheckpriceDrop(productPrice)
