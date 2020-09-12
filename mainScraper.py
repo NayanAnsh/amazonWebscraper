@@ -8,6 +8,7 @@ import matplotlib.pyplot as pyplot
 import sys
 import re
 from adjustText import adjust_text
+import smtplib as smt
 # TODOne : (CRITICAL BUG)(FIXED) Sometimes program extract wrong price
 #TODO: (Critical BUG) As amazon changes its product name,the databse treat it like new product and makes a new table
 #       for it and hence 2 or more tables form of same product e.g:- LG 22 inch ...(monitor)
@@ -32,7 +33,7 @@ today = str(date.today())
 
 DISCOUNTAlERT =   0 # n%
 DISCOUNTAlERTFROMLAST = 30 # days
-dataToBeDrawn = 30 # Draw graph of n number of days
+dataToBeDrawn = 10 # Draw graph of n number of days
 
 
 def makeConnection(URL):
@@ -154,17 +155,21 @@ def getDateList(withYear = True,withMonth = True,withDay = True):
 
     dateListRaw =  searchDB(columnName = "date")
     dateList = []
-    if withYear:
-        for  d in dateListRaw:
-            dateList.append(str(d[0]))
-    else:
-        for  d in dateListRaw:
-            date =str(d[0])
-            date =  date.split("-")
-            day = date[2]
-            month = date[1]
-            dateList.append(day+"."+month)
-
+    for  d in dateListRaw:
+            
+        rawDate =str(d[0])
+        rawDate =  rawDate.split("-")
+        day = rawDate[2]
+        month = rawDate[1]
+        year = rawDate[0]
+        date = ""
+        if withDay : date = date+day+"/"
+        if withMonth : date = date+month+"/"
+        if withYear : date = date+ year+"/"
+        date = date[:len(date)-1] #Remove last letter which is always a extra "/"
+        dateList.append(date)
+            
+  
     return dateList
 
 def getPriceList():
@@ -190,7 +195,7 @@ def labelDataPoints(priceList):
 
 def showGraph():
 
-    dateList = getDateList(withYear= False)[-dataToBeDrawn:]
+    dateList = getDateList(withDay= True,withYear= False,withMonth = True)[-dataToBeDrawn:]
     priceList = getPriceList()[-dataToBeDrawn:]
     pyplot.plot(dateList,priceList)
     pyplot.suptitle(productNameShort+"\n last " +str(dataToBeDrawn)+" days")
@@ -216,16 +221,37 @@ def getAveragePrice(days):
     avgPrice =  round(sumPrice/len(priceList))
     return avgPrice
 
-def CheckpriceDrop(currentproductPrice):
+def CheckpriceDrop(currentproductPrice,currentProductName):
     avgPrice = getAveragePrice(DISCOUNTAlERTFROMLAST)
     discountPrice = avgPrice - ((avgPrice*DISCOUNTAlERT)/100)
     # print(discountPrice)
     # print(avgPrice)
     if  discountPrice >= currentproductPrice :
         #Do Something on Price Drop
+        sendMails(currentProductName+" Price Drop", "This is working avg price  <br> -" +str(avgPrice)+" current price \n -"+str(productPrice))
         print("PRICE DROPPPPPPPPP!!!!!!!!")
         print("avg",avgPrice ," current ",productPrice )
-
+###################### MAIL SYSTEM ###############
+def sendMails(subject,body):
+    
+    print("sendMails method : Sending Mails")
+    
+    fromMsg = "nezukodemon89@gmail.com"
+    toMsg = ["nayanansh@gmail.com"
+             ,"nayanansh69@gmail.com"
+             ]
+          
+    
+    subject =  "Subject: "+subject
+    message = subject+"\n"+body+"\n"
+    
+    
+    server = smt.SMTP("smtp.gmail.com",587)
+    server.starttls() # Enable TLS
+    server.login("nezukodemon89@gmail.com","AsamplePass@12345")
+    server.set_debuglevel(0) #Print Data level 1 at lvl2 print data with time stamp at lvl 0 nothing will be printed
+    server.sendmail(fromMsg, toMsg, message.encode('utf8'))
+    server.quit()
 ######################### MAIN  ##################
 for i in range(0,len(RAW_URL)):
 
@@ -253,7 +279,7 @@ for i in range(0,len(RAW_URL)):
 
 
     #Price Drop
-    CheckpriceDrop(productPrice)
+    CheckpriceDrop(productPrice,tableName)
 
     #show database
     # print("All commands executed showing database table")
