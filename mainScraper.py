@@ -30,8 +30,8 @@ RAW_URL = ["https://www.amazon.in/AMD-Ryzen-3600-Processor-100000031BOX/dp/B07ST
 FILEPATH = os.getcwd()
 today = str(date.today())
 
-
-
+DISCOUNTAlERT =   20 # n%
+DISCOUNTAlERTFROMLAST = 30 # days
 
 def makeConnection(URL):
         #Amazon is denying service(error code 503) without user agent Header
@@ -76,10 +76,10 @@ def getPrice(bs4soup,URL):
     try:
 
         PRICE_RAW =  bs4soup.find(id = "priceblock_ourprice").get_text()
-        print("found price here")
+
     except:
         #Try another method
-        print("found price in another method")
+
         #Handle exception
         PRICE_RAW = getRawPriceFromSellersList(URL)
 
@@ -97,6 +97,9 @@ def getProductName(bs4soup):
 
 #################### DATABASE(AmazonDatabase.db) #####################
 def executeSql(query):
+
+    #All Databse Exceptions Are handled here
+
     output = ""
     conn =  sql.connect(FILEPATH +"\database\\"+"AmazonDatabase"+".db")
     c =  conn.cursor()
@@ -128,6 +131,9 @@ def searchDB(columnName = "*",where = ""):
         return executeSql('SELECT ' +columnName+ ' FROM '+tableName)
     else :
         return executeSql('SELECT ' +columnName+ ' FROM '+tableName  + ' where '+where)
+
+
+
 def deleteDB(condition):
     if condition != "":
         executeSql('DELETE FROM '+ tableName +' WHERE ' +condition)
@@ -188,7 +194,27 @@ def showGraph():
 
     pyplot.show()
 
-################# MAIN #############
+################# Price #############
+
+def getAveragePrice(days):
+    sumPrice = 0
+    priceList = getPriceList()[-days:]
+    for i in priceList :
+        sumPrice =  sumPrice + i
+    avgPrice =  round(sumPrice/len(priceList))
+    return avgPrice
+
+def CheckpriceDrop(currentproductPrice):
+    avgPrice = getAveragePrice(DISCOUNTAlERTFROMLAST)
+    discountPrice = avgPrice - ((avgPrice*DISCOUNTAlERT)/100)
+    # print(discountPrice)
+    # print(avgPrice)
+    if  discountPrice >= currentproductPrice :
+        #Do Something on Price Drop
+        print("PRICE DROPPPPPPPPP!!!!!!!!")
+        print("avg",avgPrice ," current ",productPrice )
+
+######################### MAIN  ##################
 for i in range(0,len(RAW_URL)):
 
     CurrentUrl = RAW_URL[i]
@@ -210,18 +236,12 @@ for i in range(0,len(RAW_URL)):
     insertDB(values)
 
     #graph work
-    showGraph() #Disabled This method prevent fuction of task schedulaer decomment it if want to see graph
+    #showGraph() #Disabled This method prevent fuction of task schedulaer decomment it if want to see graph
 
     #updatequery = "UPDATE "+tableName +" SET SNO = AUTOINCREMENT"
 
     #Price Drop
-    sumPrice = 0
-    for i in getPriceList():
-        sumPrice =  sumPrice + i
-    avgPrice =  sumPrice/len(getPriceList())
-    if (avgPrice - ((avgPrice*20)/100)) >= productPrice :
-        print("PRICE DROPPPPPPPPP!!!!!!!!")
-        print("avg",avgPrice ," curent ",productPrice )
+    CheckpriceDrop(productPrice)
 
     #show database
     # print("All commands executed showing database table")
