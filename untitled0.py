@@ -1,46 +1,27 @@
-import sqlite3
-import os
-from datetime import date
-import random
-import matplotlib.pyplot as pyplot
-from adjustText import adjust_text
-path = os.getcwd()
-databaseName =  "testDataBase.db"
-conn = sqlite3.connect(path+"/"+databaseName)
-c= conn.cursor()
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Sep 12 09:54:58 2020
 
-today = str(date.today())
-try:
-    c.execute("CREATE TABLE sample(date PRIMARY KEY ,text1,text2)")
-except sqlite3.OperationalError as e:
-    print(e)
-q = 'INSERT INTO sample(date,text1,text2) VALUES("'+str(random.randrange(1,100))+'","'+str(random.randrange(1,1000)) +'","sampletext2")'
-try:
-    
-    c.execute(q)
-except :
-    print("unable to enter need unique data")
-conn.commit()
-#c.execute('DELETE FROM sample WHERE text1 = "sampletext1" ' )
-c.execute('SELECT * FROM sample')
-print(c.fetchall())
+@author: Nayan
+"""
 
-c.execute('SELECT date FROM sample')
-dateList = c.fetchall()
-c.execute('SELECT text1 FROM sample')
-priceList = c.fetchall()
 
-#pyplot.plot(dateList,priceList)
-#pyplot.show()
-conn.commit()
-conn.close()
-dates = []
-for d in dateList:
-    dates.append(d[0])
+import requests
+from bs4 import BeautifulSoup
+RAW_URL ="https://www.amazon.in/LG-inch-60-96-Gaming-Monitor/dp/B06XDY3SJF/ref=sr_1_5?crid=2O80YIB7ESTM9&dchild=1&keywords=monitor+ips+1ms&qid=1597508358&s=computers&sprefix=monitor+ips+1ms%2Ccomputers%2C436&sr=1-5"
+OTHER_BUYERS_CONSTANT = "/ref=dp_olp_unknown_mbc"
+CurrentUrl = RAW_URL
+print(CurrentUrl)
+start = CurrentUrl.index("/B0")+1
+end = CurrentUrl.index("/",CurrentUrl.index("/B0") +1)
+PRODUCT_UNIQUE_CODE = CurrentUrl[start:end]
+ALL_BUYER_URL = "https://www.amazon.in/gp/offer-listing/"+PRODUCT_UNIQUE_CODE+"/ref=dp_olp_unknown_mbc"
+print(ALL_BUYER_URL)
 
-prices = []
-for p in priceList:
-    prices.append(int(str(p[0])))
-pyplot.plot(dates,prices)
-adjust_text([pyplot.text(i, prices[i], str(prices[i])) for i in range(0,len(prices))])
-pyplot.show()
+req =  requests.get(ALL_BUYER_URL,headers={"User-Agent":"Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36"})
+soup =  BeautifulSoup(req.content,"html.parser")
+print(soup.find("span",{"class":"a-size-large a-color-price olpOfferPrice a-text-bold"}))
+w =  open("Buyers.html",'w')
+st = str(req.content)
+w.write(str(req.content))
+print(str(req.content).index("a-size-large a-color-price olpOfferPrice a-text-bold"))
